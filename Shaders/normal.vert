@@ -1,0 +1,16 @@
+#version 150 core
+
+in vec3 in_Vertex;
+in vec3 in_Color;
+in vec3 in_Normals;
+
+uniform mat4 modelviewProjection;
+
+out vec3 color;
+
+void main()
+{
+	gl_Position = modelviewProjection * vec4(in_Vertex, 1.0);
+
+	color = in_Color * in_Normals;
+}
