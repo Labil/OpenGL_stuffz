@@ -120,15 +120,15 @@ void SceneOpenGL::mainLoop()
 
     Camera cam(vec3(3,3,3), vec3(0,0,0), vec3(0,1,0), 0.1, 0.1);
 
-    MeshObj meshTest("Objects/monkey5.obj", "Shaders/normal.vert", "Shaders/normal.frag");
+    MeshObj meshTest("Objects/torusTextured.obj", "Shaders/oneTextureWithNormals.vert", "Shaders/oneTextureWithNormals.frag");
 
     mInput.displayMousePointer(false);
     mInput.captureMousePointer(true);
 
-    char *test = "12.11";
+  /*  char *test = "12.11";
     double temp = strtod(test, NULL);
     float ftemp = atof(test);
-    printf("price: %f, %f", temp, ftemp);
+    printf("price: %f, %f", temp, ftemp);*/
 
    /* Ground ground(10.0, "Textures/grass.jpg", 15.0, 15.0, "Shaders/texture.vert", "Shaders/texture.frag");
 

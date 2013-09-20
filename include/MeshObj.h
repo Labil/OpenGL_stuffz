@@ -42,13 +42,13 @@ class MeshObj
 
     protected:
     private:
-        //Texture mTexture;
-        GLuint mTexture;
+        Texture mTexture;
         int mData;
         float *mVertices;
         float *mNormals;
-        float *mTextures;
+        float *mTextureCoords;
         float *mColors;
+       // std::vector<Texture*> mTextures;
         std::vector<Material*> mMaterials;
 
         GLuint mVBOid;
@@ -58,6 +58,7 @@ class MeshObj
         int mSizeVerticeBytes;
         int mSizeColorBytes;
         int mSizeNormalBytes;
+        int mSizeTextureBytes;
 
         int mNumPoints;
         bool mbIsQuadBased;
