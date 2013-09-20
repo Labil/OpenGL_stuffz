@@ -48,7 +48,7 @@ class MeshObj
         float *mNormals;
         float *mTextureCoords;
         float *mColors;
-       // std::vector<Texture*> mTextures;
+        std::vector<Texture*> mTextures;
         std::vector<Material*> mMaterials;
 
         GLuint mVBOid;
@@ -62,6 +62,11 @@ class MeshObj
 
         int mNumPoints;
         bool mbIsQuadBased;
+
+        std::vector<int> mNumElementsPerMat;
+        std::vector<GLuint> mOrderOfMaterials;
+
+        bool bHasNormals, bHasTextures;
 };
 
 

@@ -1,7 +1,7 @@
 #include "Material.h"
 
 Material::Material(std::string const name, float r, float g, float b, float a)
-    : mName(name)
+    : mName(name), mTextureID(0)
 {
     mColor.x = r;
     mColor.y = g;

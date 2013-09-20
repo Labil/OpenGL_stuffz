@@ -120,7 +120,7 @@ void SceneOpenGL::mainLoop()
 
     Camera cam(vec3(3,3,3), vec3(0,0,0), vec3(0,1,0), 0.1, 0.1);
 
-    MeshObj meshTest("Objects/torusTextured.obj", "Shaders/oneTextureWithNormals.vert", "Shaders/oneTextureWithNormals.frag");
+    MeshObj meshTest("Objects/Pony/ponni.obj", "Shaders/texture.vert", "Shaders/texture.frag");
 
     mInput.displayMousePointer(false);
     mInput.captureMousePointer(true);

@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 
+
 class Material
 {
     public:
@@ -15,10 +16,13 @@ class Material
         void setAlpha(float a);
         glm::vec4& getColors() { return mColor; }
         std::string getMaterialName() { return mName; }
+        int getMaterialTextureID() { return mTextureID; }
+        void setMaterialTextureID(int id) { mTextureID = id; }
     protected:
     private:
         glm::vec4 mColor;
         std::string mName;
+        int mTextureID;
 };
 
 #endif // MATERIAL_H

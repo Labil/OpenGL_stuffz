@@ -5,8 +5,8 @@
 #include <iostream>
 
 MeshObj::MeshObj(std::string const meshName, std::string const vertexShader, std::string const fragmentShader, int *firstFrame)
-    : mNormals(0), mVertices(0), mTextureCoords(0), mColors(0), mMaterials(0), mData(0), mTexture(), mbIsQuadBased(false),
-      mShader(vertexShader, fragmentShader), mVBOid(0), mVAOid(0), mSizeVerticeBytes(0), mSizeColorBytes(0), mSizeNormalBytes(0)
+    : mNormals(0), mVertices(0), mTextureCoords(0), mColors(0), mMaterials(0), mTextures(0), mData(0), mTexture(), mbIsQuadBased(false), bHasNormals(false), bHasTextures(false),
+      mShader(vertexShader, fragmentShader), mVBOid(0), mVAOid(0), mSizeVerticeBytes(0), mSizeColorBytes(0), mSizeNormalBytes(0), mNumElementsPerMat(0), mOrderOfMaterials(0)
 {
     mShader.load();
     loadObject(meshName, firstFrame);
@@ -25,6 +25,10 @@ MeshObj::~MeshObj()
     for(unsigned int i(0); i < mMaterials.size(); i++)
         delete mMaterials[i];
     mMaterials.clear();
+
+    for(unsigned int i(0); i < mTextures.size(); i++)
+        delete mTextures[i];
+    mTextures.clear();
 }
 
 void MeshObj::loadObject(std::string const meshName, int *firstFrame)
@@ -33,7 +37,6 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
     std::vector<glm::vec2> texCoords;
     std::vector<glm::vec4> colors;
     std::vector<int> indiceVert, indiceTex, indiceNorm;
-    int numDrawCallsMultiplier(0);
 
     std::ifstream file(meshName.c_str(), std::ios::in);
 
@@ -76,7 +79,6 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 //std::cout << numFaceData << std::endl;
                 if(numFaceData == 12)
                 {
-                    numDrawCallsMultiplier = 4;
                     mbIsQuadBased = true;
                     for(int i=0;i< 4;i++)
                     {
@@ -87,7 +89,6 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 }
                 else if(numFaceData == 9)
                 {
-                    numDrawCallsMultiplier = 3;
                     mbIsQuadBased = false;
                     for(int i=0;i< 3;i++)
                     {
@@ -96,9 +97,28 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                         indiceNorm.push_back(atoi(faceData[i*3+2].c_str())-1);
                     }
                 }
+               /* else if(numFaceData == 8)
+                {
+                    mbIsQuadBased = true;
+                    for(int i=0;i< 2;i++)
+                    {
+                        indiceVert.push_back(atoi(faceData[i*3].c_str())-1); //-1 pga .obj er index 1-basert, mens c++ er 0-basert
+                        indiceTex.push_back(atoi(faceData[i*3+1].c_str())-1);
+                        //indiceNorm.push_back(atoi(faceData[i*3+2].c_str())-1);
+                    }
+                }
+                else if(numFaceData == 6)
+                {
+                    mbIsQuadBased = false;
+                    for(int i=0;i< 2;i++)
+                    {
+                        indiceVert.push_back(atoi(faceData[i*3].c_str())-1);
+                        indiceTex.push_back(atoi(faceData[i*3+1].c_str())-1);
+                        //indiceNorm.push_back(atoi(faceData[i*3+2].c_str())-1);
+                    }
+                }
                 else if(numFaceData == 4) //When there is no texture coord or normal, and there are 4 indices, that means it's a quad -> se under display, der tegner den enten triangler eller quads
                 {
-                    numDrawCallsMultiplier = numFaceData;
                     mbIsQuadBased = true;
                     for(int i=0;i< numFaceData;i++)
                     {
@@ -107,13 +127,12 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 }
                 else if(numFaceData == 3)
                 {
-                    numDrawCallsMultiplier = numFaceData;
                     mbIsQuadBased = false;
                     for(int i=0;i< numFaceData;i++)
                     {
                         indiceVert.push_back(atoi(faceData[i].c_str())-1);
                     }
-                }
+                }*/
                 else
                 {
                     std::cout << "Error: The .obj has got the wrong number of face indices." << std::endl;
@@ -135,8 +154,24 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
             {
                 loadMaterial(getDirectory(meshName) + line.substr(7));
             }
-            else if(line[0] == 'u') //use material
+            else if(line[0] == 'u') //use material for next section of faces
+            {
                 matName = line.substr(7);
+                mNumElementsPerMat.push_back(indiceVert.size());
+                //std::cout << "CurrentNumber of elements: " << indiceVert.size() << std::endl;
+                for(unsigned int i(0); i < mMaterials.size(); i++)
+                {
+                    if(mMaterials[i]->getMaterialName() == matName)
+                    {
+                        //std::cout << "Found corresponding material and setting texture id" << std::endl;
+
+                        mOrderOfMaterials.push_back(mMaterials[i]->getMaterialTextureID());
+                        //mOrderOfMaterials.push_back(mTextures);
+                    }
+                }
+
+            }
+
         }
         file.close();
 
@@ -171,7 +206,7 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 tn.push_back(normals[indiceNorm[i]].z);
             }
         }
-        std::cout << "Length of tex indicer: " << indiceTex.size() << std::endl;
+        //std::cout << "Length of tex indicer: " << indiceTex.size() << std::endl;
         for(unsigned int i(0); i < indiceTex.size(); i++)
         {
             if(indiceTex[i] < texCoords.size())
@@ -186,6 +221,11 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
         mColors = vectorToFloat(tc);
         mTextureCoords = vectorToFloat(tt);
         mNormals = vectorToFloat(tn);
+
+        if(tn.size() > 0)
+            bHasNormals = true;
+        if(tt.size() > 0)
+            bHasTextures = true;
 
         mSizeVerticeBytes = tv.size() * sizeof(float);
         mSizeColorBytes = tc.size() * sizeof(float);
@@ -224,11 +264,28 @@ void MeshObj::load()
 
     glBindBuffer(GL_ARRAY_BUFFER, mVBOid);
 
-        glBufferData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes + mSizeNormalBytes, 0, GL_STATIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, mSizeVerticeBytes, mVertices);
-        glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes, mSizeColorBytes, mColors);
-        glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes, mSizeTextureBytes, mTextureCoords);
-        glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes + mSizeTextureBytes, mSizeNormalBytes, mNormals);
+        if(bHasNormals && bHasTextures) //Assumes that all models are sent in with vertex and color info defined
+        {
+            glBufferData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes + mSizeNormalBytes + mSizeTextureBytes, 0, GL_STATIC_DRAW);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, mSizeVerticeBytes, mVertices);
+            glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes, mSizeColorBytes, mColors);
+            glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes, mSizeTextureBytes, mTextureCoords);
+            glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes + mSizeTextureBytes, mSizeNormalBytes, mNormals);
+        }
+        else if(bHasNormals)
+        {
+            glBufferData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes + mSizeNormalBytes, 0, GL_STATIC_DRAW);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, mSizeVerticeBytes, mVertices);
+            glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes, mSizeColorBytes, mColors);
+            glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes, mSizeNormalBytes, mNormals);
+        }
+        else if(bHasTextures)
+        {
+            glBufferData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes + mSizeTextureBytes, 0, GL_STATIC_DRAW);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, mSizeVerticeBytes, mVertices);
+            glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes, mSizeColorBytes, mColors);
+            glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes, mSizeTextureBytes, mTextureCoords);
+        }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -247,11 +304,28 @@ void MeshObj::load()
             glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes));
             glEnableVertexAttribArray(1);
 
-            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
-            glEnableVertexAttribArray(2);
+            if(bHasNormals && bHasTextures)
+            {
+                std::cout << "This has both tex and normals!" << std::endl;
+                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
+                glEnableVertexAttribArray(2);
 
-            glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes + mSizeTextureBytes));
-            glEnableVertexAttribArray(3);
+                glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes + mSizeTextureBytes));
+                glEnableVertexAttribArray(3);
+            }
+            else if(bHasTextures)
+            {
+                std::cout << "This only has texture coords!" << std::endl;
+                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
+                glEnableVertexAttribArray(2);
+            }
+            else if(bHasNormals)
+            {
+                std::cout << "This only has normals!" << std::endl;
+                glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
+                glEnableVertexAttribArray(3);
+            }
+
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -261,7 +335,6 @@ void MeshObj::loadMaterial(std::string const fileName)
 {
     std::ifstream file(fileName.c_str(), std::ios::in);
     std::string matName = "";
-    std::cout << "Started loading material!" << std::endl;
 
     if(file)
     {
@@ -270,28 +343,31 @@ void MeshObj::loadMaterial(std::string const fileName)
         {
             if(line[0] == 'n') //new mat
             {
-                std::cout << "Found new mat" << std::endl;
+                //std::cout << "Found new mat" << std::endl;
                 matName = line.substr(7);
             }
             else if(line[0] == 'K' && line[1] == 'd') //diffuse
             {
-                std::cout << "Found diffuse color" << std::endl;
+                //std::cout << "Found diffuse color" << std::endl;
                 float r(0.5f), g(0.5f), b(0.5f);
                 sscanf(line.c_str(), "Kd %f %f %f", &r, &g, &b);
                 mMaterials.push_back(new Material(matName, r, g, b));
             }
             else if(line[0] == 'm' && line[5] == 'd') //map_Kd (texture)
             {
-                std::cout << "Found texture" << std::endl;
+                //std::cout << "Found texture" << std::endl;
                 std::string texturePath= getDirectory(fileName) + line.substr(7);
-                std::cout << texturePath << std::endl;
-                mTexture.setImagePath(texturePath);
-                mTexture.load();
-                std::cout << "Texture id: " << mTexture.getID() << std::endl;
+                //std::cout << texturePath << std::endl;
+                mTextures.push_back(new Texture(texturePath));
+                mTextures[mTextures.size()-1]->load();
+                mMaterials[mMaterials.size()-1]->setMaterialTextureID(mTextures[mTextures.size()-1]->getID());
+                //mTexture.setImagePath(texturePath);
+               // mTexture.load();
+                //std::cout << "Texture id: " << mTextures[mTextures.size()-1]->getID() << std::endl;
             }
             else if(line[0] == 'd') //Opacity
             {
-                std::cout << "Found diffuse" <<std::endl;
+                //std::cout << "Found diffuse" <<std::endl;
                 float alpha = atoi(line.substr(2).c_str());
                 //mMaterials[mMaterials.size()-1]->setAlpha(alpha);
             }
@@ -309,6 +385,7 @@ void MeshObj::loadMaterial(std::string const fileName)
 void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview, bool normal, bool texture)
 {
     glm::mat4 modelviewProjection = projection * modelview;
+    bool bTex = false;
 
     glUseProgram(mShader.getProgramID());
 
@@ -316,15 +393,38 @@ void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview, bool normal, 
 
             glUniformMatrix4fv(glGetUniformLocation(mShader.getProgramID(), "modelviewProjection"), 1, GL_FALSE, glm::value_ptr(modelviewProjection));
 
-            if(mTexture.getID() != 0)
-                glBindTexture(GL_TEXTURE_2D, mTexture.getID());
+            if(mNumElementsPerMat.size() > 0)
+            {
+                for(unsigned int i(0); i < mNumElementsPerMat.size(); i++)
+                {
 
-            if(mbIsQuadBased)
-                glDrawArrays(GL_QUADS, 0, mNumPoints);
-            else
-                glDrawArrays(GL_TRIANGLES, 0, mNumPoints);
+                           // std::cout << "Num elements: " << mNumElementsPerMat.size() << std::endl;
 
-            glBindTexture(GL_TEXTURE_2D, 0);
+                    glBindTexture(GL_TEXTURE_2D, mOrderOfMaterials[i]);
+
+                           // std::cout << "Number of elements to draw: " << mNumPoints - mNumElementsPerMat[i] << std::endl;
+
+                    if(mbIsQuadBased)
+                        glDrawArrays(GL_QUADS, mNumElementsPerMat[i], mNumElementsPerMat[i+1] - mNumElementsPerMat[i]);
+                    else
+                        glDrawArrays(GL_TRIANGLES, mNumElementsPerMat[i], mNumElementsPerMat[i+1] - mNumElementsPerMat[i]);
+
+                    glBindTexture(GL_TEXTURE_2D, 0);
+                }
+            }
+         /*   else
+            {
+                if(mTextures[mTextures.size()-1]->getID() != 0)
+                    //glBindTexture(GL_TEXTURE_2D, mTextures[mTextures.size()-1]->getID());
+
+                if(mbIsQuadBased)
+                    glDrawArrays(GL_QUADS, 0, mNumPoints);
+                else
+                    glDrawArrays(GL_TRIANGLES, 0, mNumPoints);
+
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }*/
+
 
         glBindVertexArray(0);
 
@@ -411,9 +511,9 @@ std::string MeshObj::getDirectory(std::string const s)
         else
             s2 += s[i];
     }
-    std::string temp = "The directory: ";
+    /*std::string temp = "The directory: ";
     temp += s1;
-    std::cout << temp << std::endl;
+    std::cout << temp << std::endl;*/
     return s1;
 }
 
