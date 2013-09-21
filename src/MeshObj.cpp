@@ -343,31 +343,24 @@ void MeshObj::loadMaterial(std::string const fileName)
         {
             if(line[0] == 'n') //new mat
             {
-                //std::cout << "Found new mat" << std::endl;
                 matName = line.substr(7);
             }
             else if(line[0] == 'K' && line[1] == 'd') //diffuse
             {
-                //std::cout << "Found diffuse color" << std::endl;
                 float r(0.5f), g(0.5f), b(0.5f);
                 sscanf(line.c_str(), "Kd %f %f %f", &r, &g, &b);
                 mMaterials.push_back(new Material(matName, r, g, b));
             }
             else if(line[0] == 'm' && line[5] == 'd') //map_Kd (texture)
             {
-                //std::cout << "Found texture" << std::endl;
                 std::string texturePath= getDirectory(fileName) + line.substr(7);
-                //std::cout << texturePath << std::endl;
                 mTextures.push_back(new Texture(texturePath));
                 mTextures[mTextures.size()-1]->load();
                 mMaterials[mMaterials.size()-1]->setMaterialTextureID(mTextures[mTextures.size()-1]->getID());
-                //mTexture.setImagePath(texturePath);
-               // mTexture.load();
-                //std::cout << "Texture id: " << mTextures[mTextures.size()-1]->getID() << std::endl;
+
             }
             else if(line[0] == 'd') //Opacity
             {
-                //std::cout << "Found diffuse" <<std::endl;
                 float alpha = atoi(line.substr(2).c_str());
                 //mMaterials[mMaterials.size()-1]->setAlpha(alpha);
             }

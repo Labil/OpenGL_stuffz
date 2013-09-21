@@ -218,8 +218,17 @@ void SceneOpenGL::mainLoop()
 
         glViewport(0,0,mWindowWidth, mWindowHeight);
 
+        mat4 savedModelview = modelview;
+                modelview = translate(modelview, vec3(5,0,0));
+                //modelview = rotate(modelview, angle, vec3(0,1,0));
+                meshTest.display(projection, modelview, false, false);
+        modelview = savedModelview;
+
         cam.lookAt(modelview);
         meshTest.display(projection, modelview, false, false);
+
+
+
 
     /*        glUseProgram(shaderText.getProgramID());
                 glBindVertexArray(vao);
