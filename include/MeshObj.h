@@ -30,7 +30,8 @@ class MeshObj
         ~MeshObj();
 
         void loadObject(std::string const meshName, int *firstFrame=NULL);
-        void load();
+        void loadVBO(std::vector<float>& v, std::vector<float>& c, std::vector<float>& t, std::vector<float>& n);
+        void loadVAO(bool normals, bool texture);
         void loadMaterial(std::string const fileName);
         void display(glm::mat4 &projection, glm::mat4 &modelview);
 
@@ -51,8 +52,8 @@ class MeshObj
         std::vector<Texture*> mTextures;
         std::vector<Material*> mMaterials;
 
-        GLuint mVBOid;
-        GLuint mVAOid;
+        std::vector<GLuint> mVBOids;
+        std::vector<GLuint> mVAOids;
         Shader mShader;
 
         int mSizeVerticeBytes;
