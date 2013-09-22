@@ -15,6 +15,7 @@ class Material
         void setColors(float r, float g, float b);
         void setAlpha(float a);
         glm::vec4& getColors() { return mColor; }
+        glm::vec3& getDiffuse();
         std::string getMaterialName() { return mName; }
         int getMaterialTextureID() { return mTextureID; }
         void setMaterialTextureID(int id) { mTextureID = id; }

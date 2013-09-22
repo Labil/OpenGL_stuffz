@@ -26,6 +26,12 @@ void Material::setAlpha(float a)
     mColor[3] = a;
 }
 
+glm::vec3& Material::getDiffuse()
+{
+    glm::vec3 col(mColor.x, mColor.y, mColor.z);
+    return col;
+}
+
 Material::~Material()
 {
     //dtor

@@ -50,6 +50,7 @@ bool SceneOpenGL::initGL()
     #endif
 
     glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_BLEND);
     //glClearColor(0.4,0.4,0.4,1.0);
 
     return true;
@@ -120,7 +121,7 @@ void SceneOpenGL::mainLoop()
 
     Camera cam(vec3(3,3,3), vec3(0,0,0), vec3(0,1,0), 0.1, 0.1);
 
-    MeshObj meshTest("Objects/Pony/ponni.obj", "Shaders/texture.vert", "Shaders/texture.frag");
+    MeshObj meshTest("Objects/monkey5.obj", "Shaders/normal.vert", "Shaders/normal.frag");
 
     mInput.displayMousePointer(false);
     mInput.captureMousePointer(true);
@@ -221,11 +222,11 @@ void SceneOpenGL::mainLoop()
         mat4 savedModelview = modelview;
                 modelview = translate(modelview, vec3(5,0,0));
                 //modelview = rotate(modelview, angle, vec3(0,1,0));
-                meshTest.display(projection, modelview, false, false);
+                //meshTest.display(projection, modelview, false, false);
         modelview = savedModelview;
 
         cam.lookAt(modelview);
-        meshTest.display(projection, modelview, false, false);
+        meshTest.display(projection, modelview);
 
 
 

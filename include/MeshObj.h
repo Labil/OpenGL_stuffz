@@ -32,7 +32,7 @@ class MeshObj
         void loadObject(std::string const meshName, int *firstFrame=NULL);
         void load();
         void loadMaterial(std::string const fileName);
-        void display(glm::mat4 &projection, glm::mat4 &modelview, bool normal=true, bool texture=false);
+        void display(glm::mat4 &projection, glm::mat4 &modelview);
 
         std::string replaceDoubleSlash(std::string const s);
         std::string replaceSlash(std::string const s);
@@ -62,11 +62,12 @@ class MeshObj
 
         int mNumPoints;
         bool mbIsQuadBased;
+        bool mbHasNormals;
+        bool mbHasTextureCoords;
 
         std::vector<int> mNumElementsPerMat;
         std::vector<GLuint> mOrderOfMaterials;
 
-        bool bHasNormals, bHasTextures;
 };
 
 
