@@ -6,7 +6,7 @@
 
 MeshObj::MeshObj(std::string const meshName, std::string const vertexShader, std::string const fragmentShader, int *firstFrame)
     : mNormals(0), mVertices(0), mTextureCoords(0), mColors(0), mMaterials(0), mTextures(0), mData(0), mTexture(), mbIsQuadBased(false), mbHasNormals(false), mbHasTextureCoords(false),
-      mShader(vertexShader, fragmentShader), mVBOids(0), mVAOids(0), mSizeVerticeBytes(0), mSizeColorBytes(0), mSizeNormalBytes(0), mNumElementsPerMat(0), mOrderOfMaterials(0)
+      mShader(vertexShader, fragmentShader), mVBOids(0), mVAOids(0), mSizeVerticeBytes(0), mSizeColorBytes(0), mSizeNormalBytes(0), mNumElementsPerMat(0), mOrderOfMaterials(0), mLoadedTextures(0)
 {
     mShader.load();
     loadObject(meshName, firstFrame);
@@ -111,7 +111,6 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                     {
                         indiceVert.push_back(atoi(faceData[i*2].c_str())-1); //-1 pga .obj er index 1-basert, mens c++ er 0-basert
                         indiceTex.push_back(atoi(faceData[i*2+1].c_str())-1);
-                        //indiceNorm.push_back(atoi(faceData[i*3+2].c_str())-1);
                     }
                 }
                 else if(numFaceData == 6)
@@ -121,7 +120,6 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                     {
                         indiceVert.push_back(atoi(faceData[i*2].c_str())-1);
                         indiceTex.push_back(atoi(faceData[i*2+1].c_str())-1);
-                        //indiceNorm.push_back(atoi(faceData[i*3+2].c_str())-1);
                     }
                 }
                 else if(numFaceData == 4) //When there is no texture coord or normal, and there are 4 indices, that means it's a quad -> se under display, der tegner den enten triangler eller quads
@@ -166,10 +164,10 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
             }
             else if(line[0] == 'u') //The material in the .mtl for next section of faces
             {
-                if(bMoreThanOneMat)
-                    mNumElementsPerMat.push_back(indiceVert.size());
-                else //Only for first 'u'
-                    bMoreThanOneMat = true;
+               // if(bMoreThanOneMat)
+                mNumElementsPerMat.push_back(indiceVert.size());
+                //else //Only for first 'u'
+                 //   bMoreThanOneMat = true;
 
                 matName = line.substr(7);
 
@@ -191,7 +189,6 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
         file.close();
 
         std::vector<float> tv(0), tc(0), tn(0), tt(0);
-        int startLoop(0), endLoop(0);
 
         if(mNumElementsPerMat.size() > 1)
         {
@@ -254,7 +251,7 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 tv.clear();
             }
         }
-        else //Only one mat
+        else //In case of no use mat
         {
 
             for(int i(0); i < indiceVert.size(); i++)
@@ -349,7 +346,6 @@ void MeshObj::loadVBO(std::vector<float>& v, std::vector<float>& c, std::vector<
 
     glBindBuffer(GL_ARRAY_BUFFER, mVBOids[mVBOids.size()-1]);
 
-
         glBufferData(GL_ARRAY_BUFFER, mSizeVerticeBytes + mSizeColorBytes + mSizeNormalBytes + mSizeTextureBytes, 0, GL_STATIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, mSizeVerticeBytes, mVertices);
         glBufferSubData(GL_ARRAY_BUFFER, mSizeVerticeBytes, mSizeColorBytes, mColors);
@@ -369,7 +365,7 @@ void MeshObj::loadVAO(bool normals, bool texture)
     GLuint buf(0);
     glGenVertexArrays(1, &buf);
     mVAOids.push_back(buf);
-    std::cout << "VAO id: " << buf << std::endl;
+    //std::cout << "VAO id: " << buf << std::endl;
 
     glBindVertexArray(mVAOids[mVAOids.size()-1]);
 
@@ -381,7 +377,7 @@ void MeshObj::loadVAO(bool normals, bool texture)
             glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes));
             glEnableVertexAttribArray(1);
 
-            if(normals && texture)
+            if(normals && texture && mTextures.size() > 0)
             {
                 std::cout << "This has both tex and normals!" << std::endl;
                 glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
@@ -390,7 +386,7 @@ void MeshObj::loadVAO(bool normals, bool texture)
                 glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes + mSizeTextureBytes));
                 glEnableVertexAttribArray(3);
             }
-            else if(texture)
+            else if(texture && mTextures.size() > 0)
             {
                 std::cout << "This only has texture coords!" << std::endl;
                 glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
@@ -432,13 +428,7 @@ void MeshObj::loadMaterial(std::string const fileName)
                 if(line[7] != ' ')
                 {
                     std::string texturePath= getDirectory(fileName) + line.substr(7);
-                    mTextures.push_back(new Texture(texturePath));
-                    if(mTextures[mTextures.size()-1]->load() != true)
-                    {
-                        std::cout << "Error loading the texture. Check that a texture image has been supplied with the .obj" << std::endl;
-                        return;
-                    }
-                    mMaterials[mMaterials.size()-1]->setMaterialTextureID(mTextures[mTextures.size()-1]->getID());
+                    manageTextureLoading(texturePath);
                 }
                 else
                 {
@@ -463,6 +453,36 @@ void MeshObj::loadMaterial(std::string const fileName)
     }
 }
 
+void MeshObj::manageTextureLoading(std::string const path)
+{
+    std::cout << "Manage textures running" << std::endl;
+
+    for(unsigned int i(0); i < mLoadedTextures.size(); i++)
+    {
+        if(path == mLoadedTextures[i])
+        {
+            std::cout << "Texture already loaded. Moving on." << std::endl;
+            for(unsigned int j(0); j < mTextures.size(); j++)
+            {
+                if(path == mTextures[j]->getImagePath())
+                    mMaterials[mMaterials.size()-1]->setMaterialTextureID(mTextures[j]->getID());
+            }
+            return;
+        }
+    }
+
+    mTextures.push_back(new Texture(path));
+
+    if(mTextures[mTextures.size()-1]->load() != true)
+    {
+        std::cout << "Error loading the texture. Check that a texture image has been supplied with the .obj" << std::endl;
+        return;
+    }
+    mLoadedTextures.push_back(path);
+    mMaterials[mMaterials.size()-1]->setMaterialTextureID(mTextures[mTextures.size()-1]->getID());
+
+
+}
 
 void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview)
 {
@@ -473,23 +493,22 @@ void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview)
 
         for(unsigned int i(0); i < mVAOids.size(); i++)
         {
-            //std::cout << "mVAOids index: " << mVAOids[i] << std::endl;
             glBindVertexArray(mVAOids[i]);
 
                 if(mOrderOfMaterials[i] != 0)
                     glBindTexture(GL_TEXTURE_2D, mOrderOfMaterials[i]);
 
                 if(mbIsQuadBased)
-                    glDrawArrays(GL_QUADS, mNumElementsPerMat[0], mNumElementsPerMat[i+1]);
+                    glDrawArrays(GL_QUADS, 0, mNumElementsPerMat[i+1]);
                 else
-                    glDrawArrays(GL_TRIANGLES, mNumElementsPerMat[0], mNumElementsPerMat[i+1]);
+                    glDrawArrays(GL_TRIANGLES, 0, mNumElementsPerMat[i+1]);
 
                 glBindTexture(GL_TEXTURE_2D, 0);
 
             glBindVertexArray(0);
         }
 
-    glUseProgram(0);
+        glUseProgram(0);
 }
 
 float* MeshObj::vectorToFloat(std::vector<float>& vec)
