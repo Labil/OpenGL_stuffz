@@ -1,6 +1,6 @@
 #include "Shader.h"
 
-// Constructeurs et Destructeur
+#include <iostream>
 
 Shader::Shader()
     : mVertexID(0), mFragmentID(0), mProgramID(0), mVertexSource(), mFragmentSource()

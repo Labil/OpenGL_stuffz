@@ -121,7 +121,7 @@ void SceneOpenGL::mainLoop()
 
     Camera cam(vec3(3,3,3), vec3(0,0,0), vec3(0,1,0), 0.1, 0.1);
 
-    MeshObj meshTest("Objects/iPad mini.obj", "Shaders/texture.vert", "Shaders/texture.frag");
+    MeshObj meshTest("Objects/BMW/bmw.obj", "Shaders/texture.vert", "Shaders/texture.frag");
 
     mInput.displayMousePointer(false);
     mInput.captureMousePointer(true);

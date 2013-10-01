@@ -30,11 +30,12 @@ class MeshObj
         ~MeshObj();
 
         void loadObject(std::string const meshName, int *firstFrame=NULL);
-        void loadVBO(std::vector<float>& v, std::vector<float>& c, std::vector<float>& t, std::vector<float>& n);
+        void loadVBO(std::vector<float>& v, std::vector<float>& c, std::vector<float>& t, std::vector<float>& n, int matIndex);
         void loadVAO(bool normals, bool texture);
         void loadMaterial(std::string const fileName);
         void display(glm::mat4 &projection, glm::mat4 &modelview);
         void manageTextureLoading(std::string const path);
+        void loadShader(std::string path); //0 = basic, 1= normals, 2 = texture
 
         std::string replaceDoubleSlash(std::string const s);
         std::string replaceSlash(std::string const s);
@@ -44,8 +45,7 @@ class MeshObj
 
     protected:
     private:
-        Texture mTexture;
-        int mData;
+
         float *mVertices;
         float *mNormals;
         float *mTextureCoords;
@@ -55,23 +55,21 @@ class MeshObj
 
         std::vector<GLuint> mVBOids;
         std::vector<GLuint> mVAOids;
+        std::vector<Shader*> mShaders;
         Shader mShader;
+        std::vector<std::string> mPathsToShaders;
+        //std::vector<std::string> mLoadedShaders;
 
         int mSizeVerticeBytes;
         int mSizeColorBytes;
         int mSizeNormalBytes;
         int mSizeTextureBytes;
-
-        int mNumPoints;
         bool mbIsQuadBased;
-        bool mbHasNormals;
-        bool mbHasTextureCoords;
 
-        std::vector<int> mNumElementsPerMat;
-        std::vector<GLuint> mOrderOfMaterials;
-
-        std::vector<std::string> mLoadedTextures;
-
+        std::vector<int> mNumElementsPerMat; //Keeps track of how many elements to draw per vbo
+        std::vector<GLuint> mOrderOfMaterials; //The order in wich the materials should be bound
+        //std::vector<std::string> mLoadedTextures; //Keeps the names of already loaded textures, so as not to load a texture twice
+        std::vector<int> mOrderOfShaders;
 };
 
 

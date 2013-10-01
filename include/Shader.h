@@ -29,6 +29,7 @@ class Shader
 
         void sendMatrix(std::string name, glm::mat4 matrix);
         GLuint getProgramID() const;
+        std::string getVertexShaderPath() { return mVertexSource; }
         bool compileShader(GLuint &shader, GLenum type, std::string const &sourcePath);
         bool load();
 

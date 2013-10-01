@@ -5,11 +5,21 @@
 #include <iostream>
 
 MeshObj::MeshObj(std::string const meshName, std::string const vertexShader, std::string const fragmentShader, int *firstFrame)
-    : mNormals(0), mVertices(0), mTextureCoords(0), mColors(0), mMaterials(0), mTextures(0), mData(0), mTexture(), mbIsQuadBased(false), mbHasNormals(false), mbHasTextureCoords(false),
-      mShader(vertexShader, fragmentShader), mVBOids(0), mVAOids(0), mSizeVerticeBytes(0), mSizeColorBytes(0), mSizeNormalBytes(0), mNumElementsPerMat(0), mOrderOfMaterials(0), mLoadedTextures(0)
+    : mNormals(0), mVertices(0), mTextureCoords(0), mColors(0), mMaterials(0), mTextures(0), mbIsQuadBased(false), mShaders(0),
+      mShader(vertexShader, fragmentShader), mVBOids(0), mVAOids(0), mSizeVerticeBytes(0), mSizeColorBytes(0), mSizeNormalBytes(0), mNumElementsPerMat(0), mOrderOfMaterials(0)
 {
-    mShader.load();
+    //mShader.load();
+    std::cout << mShader.getVertexShaderPath() << std::endl;
+
+    mPathsToShaders.push_back("Shaders/basic3D");
+    mPathsToShaders.push_back("Shaders/normal");
+    mPathsToShaders.push_back("Shaders/texture");
+
+    //for(unsigned int i(0); i < mPathsToShaders.size(); i++) //Initializing the shader array
+        //mShaders.push_back(mPathsToShaders.size()+1); //Initialized with value higher than the number of available shaders
+
     loadObject(meshName, firstFrame);
+
 }
 
 MeshObj::~MeshObj()
@@ -81,7 +91,6 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 std::vector<std::string> faceData = splitSpace(line.substr(2));
                 int numFaceData=(int)faceData.size();
                 int colPerFaceData(0);
-                //std::cout << numFaceData << std::endl;
 
                 if(numFaceData == 12)
                 {
@@ -166,9 +175,15 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                         curMatIndex = i; //Sets the current index so that we don't have to loop through to find colors (see above)
 
                         if(mMaterials[i]->getMaterialTextureID() != 0)
+                        {
                             mOrderOfMaterials.push_back(mMaterials[i]->getMaterialTextureID());
+
+                        }
                         else
+                        {
                             mOrderOfMaterials.push_back(0); //No texture for this mat
+                        }
+
                     }
                 }
             }
@@ -228,7 +243,7 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                     }
                 }
 
-                loadVBO(tv, tc, tt, tn);
+                loadVBO(tv, tc, tt, tn, j);
 
                 tt.clear();
                 tc.clear();
@@ -264,22 +279,19 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 }
             }
 
-            loadVBO(tv, tc, tt, tn);
+            loadVBO(tv, tc, tt, tn, 0);
             tt.clear();
             tc.clear();
             tn.clear();
             tv.clear();
 
         }
-        //std::cout << "Indices verts num: " << indiceVert.size() << std::endl;
-        //std::cout << "Vertices size num: " << numVerts/3 << std::endl;
         for(int i(0); i < mNumElementsPerMat.size()-1; i++)
         {
             if(i == mNumElementsPerMat.size()-1)
                 mNumElementsPerMat[i] = 0;
 
             mNumElementsPerMat[i] = mNumElementsPerMat[i+1] - mNumElementsPerMat[i];
-            std::cout << "num elements in i: " << mNumElementsPerMat[i] << std::endl;
         }
 
         vertices.clear();
@@ -291,8 +303,6 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
         indiceTex.clear();
         indiceNorm.clear();
 
-        for(int i(0); i < mNumElementsPerMat.size(); i++)
-            std::cout << "Number of elements per vbo: " << mNumElementsPerMat[i] << std::endl;
     }
     else
     {
@@ -302,11 +312,8 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
 
 }
 
-void MeshObj::loadVBO(std::vector<float>& v, std::vector<float>& c, std::vector<float>& t, std::vector<float>& n)
+void MeshObj::loadVBO(std::vector<float>& v, std::vector<float>& c, std::vector<float>& t, std::vector<float>& n, int matIndex)
 {
-
-    std::cout << "Loading vbo" << std::endl;
-
     mVertices = vectorToFloat(v);
     mColors = vectorToFloat(c);
     mTextureCoords = vectorToFloat(t);
@@ -334,13 +341,16 @@ void MeshObj::loadVBO(std::vector<float>& v, std::vector<float>& c, std::vector<
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    loadVAO(n.size() > 0, t.size() > 0);
+    bool hasTex(false);
+    if(mOrderOfMaterials[matIndex] != 0)
+        hasTex = true;
+    std::cout << "Texture id for current material: " << mOrderOfMaterials[matIndex] << std::endl;
+
+    loadVAO(n.size() > 0, hasTex);
 }
 
 void MeshObj::loadVAO(bool normals, bool texture)
 {
-    std::cout << "Loading VAO with normals: " << normals << " and texture: " << texture << std::endl;
-
     GLuint buf(0);
     glGenVertexArrays(1, &buf);
     mVAOids.push_back(buf);
@@ -355,26 +365,34 @@ void MeshObj::loadVAO(bool normals, bool texture)
             glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes));
             glEnableVertexAttribArray(1);
 
-            if(normals && texture && mTextures.size() > 0)
+            if(normals && texture)
             {
-                std::cout << "This has both tex and normals!" << std::endl;
+                //std::cout << "This has both tex and normals!" << std::endl;
                 glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
                 glEnableVertexAttribArray(2);
 
                 glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes + mSizeTextureBytes));
                 glEnableVertexAttribArray(3);
+
+                loadShader(mPathsToShaders[2]);
             }
-            else if(texture && mTextures.size() > 0)
+            else if(texture)
             {
-                std::cout << "This only has texture coords!" << std::endl;
+                //std::cout << "This only has texture coords!" << std::endl;
                 glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
                 glEnableVertexAttribArray(2);
+                loadShader(mPathsToShaders[2]);
             }
             else if(normals)
             {
-                std::cout << "This only has normals!" << std::endl;
+                //std::cout << "This only has normals!" << std::endl;
                 glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(mSizeVerticeBytes + mSizeColorBytes));
                 glEnableVertexAttribArray(3);
+                loadShader(mPathsToShaders[1]);
+            }
+            else
+            {
+                loadShader(mPathsToShaders[0]);
             }
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -413,8 +431,6 @@ void MeshObj::loadMaterial(std::string const fileName)
                     std::cout << "The name of the texture to use is not specified in the .mtl" << std::endl;
                     mMaterials[mMaterials.size()-1]->setMaterialTextureID(0);
                 }
-
-
             }
             else if(line[0] == 'd') //Opacity
             {
@@ -434,18 +450,11 @@ void MeshObj::loadMaterial(std::string const fileName)
 
 void MeshObj::manageTextureLoading(std::string const path)
 {
-    std::cout << "Manage textures running" << std::endl;
-
-    for(unsigned int i(0); i < mLoadedTextures.size(); i++)
+    for(unsigned int j(0); j < mTextures.size(); j++)
     {
-        if(path == mLoadedTextures[i])
+        if(path == mTextures[j]->getImagePath())
         {
-            std::cout << "Texture already loaded. Moving on." << std::endl;
-            for(unsigned int j(0); j < mTextures.size(); j++)
-            {
-                if(path == mTextures[j]->getImagePath())
-                    mMaterials[mMaterials.size()-1]->setMaterialTextureID(mTextures[j]->getID());
-            }
+            mMaterials[mMaterials.size()-1]->setMaterialTextureID(mTextures[j]->getID());
             return;
         }
     }
@@ -457,9 +466,28 @@ void MeshObj::manageTextureLoading(std::string const path)
         std::cout << "Error loading the texture. Check that a texture image has been supplied with the .obj" << std::endl;
         return;
     }
-    mLoadedTextures.push_back(path);
     mMaterials[mMaterials.size()-1]->setMaterialTextureID(mTextures[mTextures.size()-1]->getID());
 
+}
+void MeshObj::loadShader(std::string path)
+{
+    if(mShaders.size() > 0)
+    {
+        for(unsigned int i(0); i < mShaders.size(); i++)
+        {
+            if(path + ".vert" == mShaders[i]->getVertexShaderPath())
+            {
+                mOrderOfShaders.push_back(i);
+                return;
+            }
+        }
+    }
+
+    mShaders.push_back(new Shader(path + ".vert", path + ".frag"));
+    mShaders[mShaders.size()-1]->load();
+
+    std::cout << "Recent shader loaded is: " << path << " with id: " << mShaders[mShaders.size()-1]->getProgramID() << std::endl;
+    mOrderOfShaders.push_back(mShaders.size()-1);
 
 }
 
@@ -467,27 +495,29 @@ void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview)
 {
     glm::mat4 modelviewProjection = projection * modelview;
 
-    glUseProgram(mShader.getProgramID());
-    glUniformMatrix4fv(glGetUniformLocation(mShader.getProgramID(), "modelviewProjection"), 1, GL_FALSE, glm::value_ptr(modelviewProjection));
-
         for(unsigned int i(0); i < mVAOids.size(); i++)
         {
-            glBindVertexArray(mVAOids[i]);
 
-                if(mOrderOfMaterials[i] != 0)
-                    glBindTexture(GL_TEXTURE_2D, mOrderOfMaterials[i]);
+            glUseProgram(mShaders[mOrderOfShaders[i]]->getProgramID());
+            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelviewProjection"), 1, GL_FALSE, glm::value_ptr(modelviewProjection));
 
-                if(mbIsQuadBased)
-                    glDrawArrays(GL_QUADS, 0, mNumElementsPerMat[i]);
-                else
-                    glDrawArrays(GL_TRIANGLES, 0, mNumElementsPerMat[i]);
+                glBindVertexArray(mVAOids[i]);
 
-                glBindTexture(GL_TEXTURE_2D, 0);
+                    if(mOrderOfMaterials[i] != 0)
+                        glBindTexture(GL_TEXTURE_2D, mOrderOfMaterials[i]);
 
-            glBindVertexArray(0);
+                    if(mbIsQuadBased)
+                        glDrawArrays(GL_QUADS, 0, mNumElementsPerMat[i]);
+                    else
+                        glDrawArrays(GL_TRIANGLES, 0, mNumElementsPerMat[i]);
+
+                    glBindTexture(GL_TEXTURE_2D, 0);
+
+                glBindVertexArray(0);
+            glUseProgram(0);
         }
 
-        glUseProgram(0);
+
 }
 
 float* MeshObj::vectorToFloat(std::vector<float>& vec)
