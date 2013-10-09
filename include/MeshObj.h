@@ -33,7 +33,7 @@ class MeshObj
         void loadVBO(std::vector<float>& v, std::vector<float>& c, std::vector<float>& t, std::vector<float>& n, int matIndex);
         void loadVAO(bool normals, bool texture);
         void loadMaterial(std::string const fileName);
-        void display(glm::mat4 &projection, glm::mat4 &modelview);
+        void display(glm::mat4 &projection, glm::mat4 &modelview, glm::mat3 &normalMatrix);
         void manageTextureLoading(std::string const path);
         void loadShader(std::string path); //0 = basic, 1= normals, 2 = texture
 
@@ -42,6 +42,10 @@ class MeshObj
         std::vector<std::string> splitSpace(std::string const s);
         std::string getDirectory(std::string const s);
         float* vectorToFloat(std::vector<float>& vec);
+
+        void sendLightInfoToShaders(glm::vec4 &v); //i.e LightPosition, Kd,
+
+        std::vector<GLuint>& getShaders();
 
     protected:
     private:

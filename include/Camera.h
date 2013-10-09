@@ -1,12 +1,22 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+
+//Include OpenGL
+#ifdef WIN32
+#include <GL/glew.h>
+#else
+#define GL3_PROTOTYPES 1
+#include <GL3/gl3.h>
+#endif
+
 //GLM Math lib
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Input.h"
+#include <vector>
 
 class Camera
 {
@@ -20,6 +30,9 @@ class Camera
         void lookAt(glm::mat4 &modelview);
         void setTarget(glm::vec3 target);
         void setPosition(glm::vec3 position);
+        void addShader(GLuint const &shaderID);
+        void addShader(std::vector<GLuint> &shaders);
+        void updateLightPosition(glm::vec3 lightPos);
 
         float getSensibility() const { return mTurnSensibility; }
         float getSpeed() const { return mMovementSpeed; }
@@ -48,6 +61,11 @@ class Camera
 
         float mTurnSensibility;
         float mMovementSpeed;
+
+        std::vector<GLuint> mShaders;
+        void updateShaders(const char* locName, const glm::mat4 &matrix);
+        void updateShaders(const char* locName, const glm::vec3 &vec);
+        void updateShaders(const char* locName, const float &value);
 };
 
 #endif // CAMERA_H

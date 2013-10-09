@@ -491,7 +491,7 @@ void MeshObj::loadShader(std::string path)
 
 }
 
-void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview)
+void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview, glm::mat3 &normalMatrix)
 {
     glm::mat4 modelviewProjection = projection * modelview;
 
@@ -500,6 +500,10 @@ void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview)
 
             glUseProgram(mShaders[mOrderOfShaders[i]]->getProgramID());
             glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelviewProjection"), 1, GL_FALSE, glm::value_ptr(modelviewProjection));
+            //glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelview"), 1, GL_FALSE, glm::value_ptr(modelview));
+            glUniformMatrix3fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
 
                 glBindVertexArray(mVAOids[i]);
 
@@ -604,6 +608,29 @@ std::string MeshObj::getDirectory(std::string const s)
     temp += s1;
     std::cout << temp << std::endl;*/
     return s1;
+}
+
+std::vector<GLuint>& MeshObj::getShaders()
+{
+    std::vector<GLuint> shaderIDs;
+
+    for(unsigned int i(0); i < mShaders.size(); i++)
+    {
+        shaderIDs.push_back(mShaders[i]->getProgramID());
+    }
+
+    return shaderIDs;
+}
+
+void MeshObj::sendLightInfoToShaders(glm::vec4 &v)
+{
+    for(int i(0); i < mShaders.size(); i++)
+    {
+        //std::cout << "Running sendLightInfoToShaders" << std::endl;
+        mShaders[i]->setUniform("LightPosition", v);
+        //mShaders[i]->setUniform("Kd", 0.9f, 0.5f, 0.3f);
+        //mShaders[i]->setUniform("Ld", 1.0f, 1.0f, 1.0f);
+    }
 }
 
 

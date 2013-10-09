@@ -151,6 +151,83 @@ void Shader::sendMatrix(std::string name, glm::mat4 matrix)
     glUniformMatrix4fv(glGetUniformLocation(mProgramID, name.c_str()),1, GL_FALSE, glm::value_ptr(matrix));
 }
 
+void Shader::setUniform(const char *name, float x, float y, float z)
+{
+    int loc =  glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+        glUniform3f(loc, x, y, z);
+    else
+        printf("Uniform %s not found.\n", name);
+}
+
+void Shader::setUniform(const char *name, const glm::vec3 &v)
+{
+    this->setUniform(name, v.x, v.y, v.z);
+}
+
+void Shader::setUniform(const char *name, const glm::vec4 &v)
+{
+    int loc = glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+        glUniform4f(loc, v.x, v.y, v.z, v.w);
+    else
+        printf("Uniform %s not found.\n", name);
+}
+
+void Shader::setUniform(const char *name, const glm::vec2 &v)
+{
+    int loc = glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+        glUniform2f(loc, v.x, v.y);
+    else
+        printf("Uniform %s not found.\n", name);
+}
+
+void Shader::setUniform(const char *name, const glm::mat4 &m)
+{
+    int loc = glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+        glUniformMatrix4fv(loc, 1, GL_FALSE, &m[0][0]);
+    else
+        printf("Uniform %s not found.\n", name);
+}
+
+void Shader::setUniform(const char *name, const glm::mat3 &m)
+{
+    int loc = glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+        glUniformMatrix3fv(loc, 1, GL_FALSE, &m[0][0]);
+    else
+        printf("Uniform %s not found\n", name);
+}
+
+void Shader::setUniform(const char *name, float val)
+{
+    int loc = glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+        glUniform1f(loc, val);
+    else
+        printf("Uniform %s not found.\n", name);
+}
+
+void Shader::setUniform(const char *name, int val)
+{
+    int loc = glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+        glUniform1i(loc, val);
+    else
+        printf("Uniform %s not found.\n", name);
+}
+
+void Shader::setUniform(const char *name, bool b)
+{
+    int loc = glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+        glUniform1i(loc, b);
+    else
+        printf("Uniform %s not found.\n", name);
+}
+
 Shader& Shader::operator=(Shader const &shaderToCopy)
 {
     mVertexSource = shaderToCopy.mVertexSource;

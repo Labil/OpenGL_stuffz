@@ -49,10 +49,14 @@ class SceneOpenGL
         int mWindowHeight;
 
         Input mInput;
-        //bool mKeyClicked;
         bool mKeysClicked[29];
 
         std::vector<Square> mSquares;
+
+        glm::mat4 mModel;
+        glm::mat4 mView;
+        glm::mat4 mModelview;
+        glm::mat4 mProjection;
 
 };
 

@@ -133,3 +133,53 @@ void Camera::setPosition(glm::vec3 position)
     mPosition = position;
     mTarget = mPosition + mOrientation;
 }
+
+void Camera::addShader(const GLuint &shaderID)
+{
+    mShaders.push_back(shaderID);
+
+    //glUseProgram(shaderID);
+    //glUniformMatrix4fv(glGetUniformLocation(shaderID, "view"))
+
+}
+
+void Camera::addShader(std::vector<GLuint> &shaders)
+{
+    for(int i(0); i < shaders.size(); i++)
+    {
+        mShaders.push_back(shaders[i]);
+    }
+}
+
+void Camera::updateLightPosition(glm::vec3 lightPos)
+{
+    updateShaders("LightPosition_worldspace", lightPos);
+}
+
+void Camera::updateShaders(const char* locName, const float& value)
+{
+    for(int i=0; i< mShaders.size(); i++)
+    {
+        glUseProgram(mShaders[i]);
+        glUniform1f(glGetUniformLocation(mShaders[i], locName ),value );
+    }
+    glUseProgram(0);
+}
+void Camera::updateShaders(const char* locName, const glm::mat4& matrix)
+{
+    for(int i=0; i< mShaders.size(); i++)
+    {
+        glUseProgram(mShaders[i]);
+        glUniformMatrix4fv(glGetUniformLocation(mShaders[i], locName), 1,GL_FALSE,glm::value_ptr(matrix) );
+    }
+    glUseProgram(0);
+}
+void Camera::updateShaders(const char* locName, const glm::vec3& vec)
+{
+    for(int i=0; i< mShaders.size(); i++)
+    {
+        glUseProgram(mShaders[i]);
+        glUniform3fv(glGetUniformLocation(mShaders[i], locName ), 1, glm::value_ptr(vec) );
+    }
+    glUseProgram(0);
+}

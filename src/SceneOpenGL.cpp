@@ -51,7 +51,7 @@ bool SceneOpenGL::initGL()
 
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_BLEND);
-    //glClearColor(0.4,0.4,0.4,1.0);
+    glClearColor(0.4,0.4,0.4,1.0);
 
     return true;
 
@@ -110,21 +110,26 @@ void SceneOpenGL::mainLoop()
     FrameBuffer frameBuffer(512, 512);
     frameBuffer.load();
 
-    mat4 projection; //Displays a 3D world on a 2D screen
-    mat4 modelview; //Koordinasjonssystemet vi bruker til å plassere, rotere, skalere etc alle modellene i scenen
+    //mat4 projection; //Displays a 3D world on a 2D screen
+   // mat4 modelview; //Koordinasjonssystemet vi bruker til å plassere, rotere, skalere etc alle modellene i scenen
 
-    mat4 projectionFBO, modelviewFBO;
+   /* mat4 projectionFBO, modelviewFBO;
     projectionFBO = perspective(70.0, (double)frameBuffer.getWidth() / frameBuffer.getHeight(), 1.0, 100.0);
     modelviewFBO = mat4(1.0);
 
-    float angle = 0.0;
+    float angle = 0.0;*/
 
     Camera cam(vec3(3,3,3), vec3(0,0,0), vec3(0,1,0), 0.1, 0.1);
 
-    MeshObj meshTest("Objects/BMW/bmw.obj", "Shaders/texture.vert", "Shaders/texture.frag");
+    MeshObj meshTest("Objects/monkeyTextured.obj", "Shaders/normal.vert", "Shaders/normal.frag");
+
+    //cam.addShader(meshTest.getShaders());
 
     mInput.displayMousePointer(false);
     mInput.captureMousePointer(true);
+
+   // glm::vec3 sunPos = glm::vec3(0.0f, 0.0f, 0.0f);
+   // cam.updateLightPosition(sunPos);
 
   /*  char *test = "12.11";
     double temp = strtod(test, NULL);
@@ -135,11 +140,23 @@ void SceneOpenGL::mainLoop()
 
     Cabin cabin(5.0, "Textures/Wallpaper.jpg", 15.0, 15.0, "Shaders/texture.vert", "Shaders/texture.frag");
 */
-   // projection = MakeOrtho(0, mWindowWidth, 0, mWindowHeight, 1.0f, 100.0f);
-    //projection = glm::ortho(0, mWindowWidth, 0, mWindowHeight, 1, 100);
-    projection = perspective(70.0, (double)mWindowWidth/mWindowHeight, 1.0, 100.0);
-    modelview = mat4(1.0); //identity matrix
 
+    mModel = glm::mat4(1.0f);
+   // mModel *= glm::rotate(-35.0f, vec3(1.0f,0.0f,0.0f));
+   // mModel *= glm::rotate(35.0f, vec3(0.0f,1.0f,0.0f));
+
+    mView = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+   // mProjection = MakeOrtho(0, mWindowWidth, 0, mWindowHeight, 1.0f, 100.0f);
+
+    mProjection = perspective(70.0, (double)mWindowWidth/mWindowHeight, 1.0, 100.0);
+
+
+
+    //mProjection = mat4(1.0f);
+    glm::vec4 sunPos = mView * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    //glm::vec4 vec = mView * glm::vec4(5.0f, 5.0f, 2.0f, 1.0f);
+
+    meshTest.sendLightInfoToShaders(sunPos);
 
     /*Crate crate(2.0, "Shaders/texture.vert", "Shaders/texture.frag", "Textures/Crate.jpg");
     crate.load();
@@ -179,6 +196,8 @@ void SceneOpenGL::mainLoop()
     Shader shaderText("Shaders/texture.vert", "Shaders/texture.frag");
     shaderText.load();*/
 
+    glm::mat3 normalMatrix;
+
 
     while(!mInput.exit())
     {
@@ -192,41 +211,52 @@ void SceneOpenGL::mainLoop()
         cam.move(mInput);
         //modelview = lookAt(vec3(0, 0, -4), vec3(0, 0, 0), vec3(0, 1, 0)); //Trenger ikke sette modelview til identity igjen, pga det å sette den til lookAt gjør det på en måte for oss
 
-        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.getID());
+   //     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.getID());
 
-            glClearColor(0.5, 0.5, 0.5, 1.0);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  //          glClearColor(0.5, 0.5, 0.5, 1.0);
+  //          glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glViewport(0, 0, frameBuffer.getWidth(), frameBuffer.getHeight());
+ //           glViewport(0, 0, frameBuffer.getWidth(), frameBuffer.getHeight());
 
-            modelviewFBO = lookAt(vec3(3,0,3), vec3(0,0,0), vec3(0,1,0));
+           // modelviewFBO = lookAt(vec3(3,0,3), vec3(0,0,0), vec3(0,1,0));
 
 
-            angle += 1;
+           /* angle += 1;
             if(angle > 360)
-                angle = 0;
+                angle = 0;*/
 
-            mat4 savedModelviewFBO = modelviewFBO;
-                modelviewFBO = rotate(modelviewFBO, angle, vec3(0,1,0));
+           // mat4 savedModelviewFBO = modelviewFBO;
+          //      modelviewFBO = rotate(modelviewFBO, angle, vec3(0,1,0));
 
 //                crate.display(projectionFBO, modelviewFBO);
-            modelviewFBO = savedModelviewFBO;
+       //     modelviewFBO = savedModelviewFBO;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glClearColor(0.1, 0.1, 0.6, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glViewport(0,0,mWindowWidth, mWindowHeight);
 
-        mat4 savedModelview = modelview;
-                modelview = translate(modelview, vec3(5,0,0));
+       // sunPos = mView * glm::vec4(sin(startLoopTime/1.0)*100, sin(startLoopTime/1.0)*100, cos(startLoopTime/1.0) * 70, 1.0f);
+
+      //  mat4 savedModelview = mModelview;
+      //          mModelview = translate(mModelview, vec3(5,0,0));
                 //modelview = rotate(modelview, angle, vec3(0,1,0));
                 //meshTest.display(projection, modelview, false, false);
-        modelview = savedModelview;
+    //    mModelview = savedModelview;
 
-        cam.lookAt(modelview);
-        meshTest.display(projection, modelview);
+        cam.lookAt(mModelview);
+   //     meshTest.sendLightInfoToShaders(sunPos);
+
+      /*  sunPos.x = sin(startLoopTime/1.0)*100;
+        sunPos.y = 200;
+        sunPos.z = cos(startLoopTime/1.0) * 70;*/
+
+
+        //mModelview = mView * mModel;
+        normalMatrix = glm::mat3(vec3(mModelview[0]), vec3(mModelview[1]), vec3(mModelview[2]));
+        meshTest.display(mProjection, mModelview, normalMatrix);
 
 
 

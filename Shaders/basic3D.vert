@@ -5,6 +5,8 @@ in vec3 in_Color;
 
 uniform mat4 modelviewProjection;
 
+uniform vec3 LightPosition_worldspace;
+
 out vec3 color;
 
 void main()

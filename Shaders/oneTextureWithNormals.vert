@@ -6,6 +6,7 @@ in vec2 in_TexCoord0;
 in vec3 in_Normals;
 
 uniform mat4 modelviewProjection;
+uniform vec3 LightPosition_worldspace;
 
 out vec3 normal;
 out vec2 texCoord;
