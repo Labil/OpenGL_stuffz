@@ -9,7 +9,7 @@ MeshObj::MeshObj(std::string const meshName, std::string const vertexShader, std
       mShader(vertexShader, fragmentShader), mVBOids(0), mVAOids(0), mSizeVerticeBytes(0), mSizeColorBytes(0), mSizeNormalBytes(0), mNumElementsPerMat(0), mOrderOfMaterials(0)
 {
     //mShader.load();
-    std::cout << mShader.getVertexShaderPath() << std::endl;
+   // std::cout << mShader.getVertexShaderPath() << std::endl;
 
     mPathsToShaders.push_back("Shaders/basic3D");
     mPathsToShaders.push_back("Shaders/normal");
@@ -491,19 +491,23 @@ void MeshObj::loadShader(std::string path)
 
 }
 
-void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview, glm::mat3 &normalMatrix)
+//void MeshObj::display(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection, glm::mat3 &normalMatrix)
+void MeshObj::display(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection)
+//void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview, glm::mat3 &normalMatrix)
 {
-    glm::mat4 modelviewProjection = projection * modelview;
+  //  glm::mat4 modelviewProjection = projection * modelview;
+  //glm::mat4 modelviewProjection = model * view * projection;
 
         for(unsigned int i(0); i < mVAOids.size(); i++)
         {
 
             glUseProgram(mShaders[mOrderOfShaders[i]]->getProgramID());
-            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelviewProjection"), 1, GL_FALSE, glm::value_ptr(modelviewProjection));
-            //glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelview"), 1, GL_FALSE, glm::value_ptr(modelview));
-            glUniformMatrix3fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "NormalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
+           // glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelviewProjection"), 1, GL_FALSE, glm::value_ptr(modelviewProjection));
+            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+           // glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelview"), 1, GL_FALSE, glm::value_ptr(modelview));
+           // glUniformMatrix3fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
 
                 glBindVertexArray(mVAOids[i]);
 
@@ -513,7 +517,7 @@ void MeshObj::display(glm::mat4 &projection, glm::mat4 &modelview, glm::mat3 &no
                     if(mbIsQuadBased)
                         glDrawArrays(GL_QUADS, 0, mNumElementsPerMat[i]);
                     else
-                        glDrawArrays(GL_TRIANGLES, 0, mNumElementsPerMat[i]);
+                       glDrawArrays(GL_TRIANGLES, 0, mNumElementsPerMat[i]);
 
                     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -622,12 +626,13 @@ std::vector<GLuint>& MeshObj::getShaders()
     return shaderIDs;
 }
 
-void MeshObj::sendLightInfoToShaders(glm::vec4 &v)
+void MeshObj::sendLightInfoToShaders(glm::vec3 &v)
 {
     for(int i(0); i < mShaders.size(); i++)
     {
-        //std::cout << "Running sendLightInfoToShaders" << std::endl;
-        mShaders[i]->setUniform("LightPosition", v);
+       // std::cout << "Running sendLightInfoToShaders: " << v.x << " and " << v.y << " and " << v.z << std::endl;
+        mShaders[i]->setUniform("LightPosition_worldspace", v);
+      //  mShaders[i]->setUniform("LightPosition", v);
         //mShaders[i]->setUniform("Kd", 0.9f, 0.5f, 0.3f);
         //mShaders[i]->setUniform("Ld", 1.0f, 1.0f, 1.0f);
     }

@@ -162,7 +162,19 @@ void Shader::setUniform(const char *name, float x, float y, float z)
 
 void Shader::setUniform(const char *name, const glm::vec3 &v)
 {
-    this->setUniform(name, v.x, v.y, v.z);
+    //printf("Uniform values is %f, %f, %f.\n", v.x, v.y, v.z);
+    //this->setUniform(name, v.x, v.y, v.z);
+    int loc =  glGetUniformLocation(mProgramID, name);
+    if(loc >= 0)
+    {
+        glUseProgram(mProgramID);
+        glUniform3fv(loc, 1, glm::value_ptr(v));
+        glUseProgram(0);
+    }
+
+    else
+        printf("wrooooong");
+
 }
 
 void Shader::setUniform(const char *name, const glm::vec4 &v)

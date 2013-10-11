@@ -1,36 +1,37 @@
-#version 150 core
+#version 330
 
 in vec3 in_Vertex;
 in vec3 in_Color;
 in vec3 in_Normals;
 
-//out vec3 LightIntensity;
+out vec3 EyeDirection_cameraspace;
+out vec3 LightDirection_cameraspace;
+out vec3 Normal_cameraspace;
 
-uniform vec4 LightPosition; //Light position in eye coords.
-//uniform vec3 Kd;			//Diffuse reflectivity.
-//uniform vec3 Ld;			//Diffuse light intensity.
+out float lightVertexDistance;
 
-uniform mat4 modelview;
-uniform mat3 NormalMatrix;
-uniform mat4 modelviewProjection;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform vec3 LightPosition_worldspace;
 
-out float intensity;
 
 out vec3 color;
 
 void main()
 {
-	vec3 tnorm = normalize(NormalMatrix * in_Normals);
-	vec4 eyeCoords = modelview * vec4(in_Vertex, 1.0f);
-	vec3 lightDir = normalize(vec3(LightPosition - eyeCoords));
+	gl_Position = projection * view * model * vec4(in_Vertex, 1.0);
 
-	//LightIntensity = Ld * Kd * max(dot(lightDir, tnorm), 0.0);
+	vec3 Position_worldspace = (model * vec4(in_Vertex, 1)).xyz;
+	lightVertexDistance = distance(Position_worldspace, LightPosition_worldspace);
 
-	intensity = clamp(dot(tnorm, lightDir), 0, 1);
+	vec3 vertexPosition_cameraspace = (view * model * vec4(in_Vertex, 1)).xyz;
+	EyeDirection_cameraspace = vec3(0.0,0.0,0.0) - vertexPosition_cameraspace;
 
-	gl_Position = modelviewProjection * vec4(in_Vertex, 1.0);
+	vec3 LightPosition_cameraspace = (view * vec4(LightPosition_worldspace, 1)).xyz;
+	LightDirection_cameraspace = LightPosition_cameraspace + EyeDirection_cameraspace;
 
-
+	Normal_cameraspace = (view * model * vec4(in_Normals, 0.0)).xyz; //Only corret if ModelMatrix does not scale the model. Use its inverse transpose if not.
 
 	color = in_Color;
 }
