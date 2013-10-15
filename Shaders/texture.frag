@@ -14,6 +14,7 @@ out vec3 out_Color;
 uniform sampler2D tex;
 
 uniform vec3 LightPosition_worldspace;
+uniform vec3 MaterialDiffuseColor;
 
 
 void main()
@@ -24,8 +25,8 @@ void main()
 	float LightPower = 1.0f;
 
 	//Material properties
-	vec3 MaterialDiffuseColor = texture2D(tex, texCoord).rgb;
-	vec3 MaterialAmbientColor = vec3(0.1, 0.1, 0.1) * MaterialDiffuseColor;
+	vec3 MaterialTextureColor = texture2D(tex, texCoord).rgb;
+	vec3 MaterialAmbientColor = vec3(0.1, 0.1, 0.1) * MaterialTextureColor;
 	vec3 MaterialSpecularColor = vec3(0.3, 0.3, 0.3);
 
 
@@ -52,7 +53,7 @@ void main()
 	//out_Color = vec4(color, 1.0);
 
 	//out_Color = MaterialAmbientColor + MaterialDiffuseColor * LightColor * LightPower * cosTheta / (lightVertexDistance * lightVertexDistance) + MaterialSpecularColor * LightColor * LightPower * specular / (lightVertexDistance * lightVertexDistance);
-	out_Color = MaterialAmbientColor + MaterialDiffuseColor * LightColor * LightPower * cosTheta + (MaterialSpecularColor * LightColor * LightPower * specular);
+	out_Color = MaterialAmbientColor + MaterialTextureColor * LightColor * LightPower * cosTheta + (MaterialSpecularColor * LightColor * LightPower * specular);
 	
 
 }

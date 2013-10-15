@@ -163,7 +163,7 @@ void Shader::setUniform(const char *name, float x, float y, float z)
 void Shader::setUniform(const char *name, const glm::vec3 &v)
 {
     //printf("Uniform values is %f, %f, %f.\n", v.x, v.y, v.z);
-    //this->setUniform(name, v.x, v.y, v.z);
+ //   this->setUniform(name, v.x, v.y, v.z);
     int loc =  glGetUniformLocation(mProgramID, name);
     if(loc >= 0)
     {
@@ -173,7 +173,7 @@ void Shader::setUniform(const char *name, const glm::vec3 &v)
     }
 
     else
-        printf("wrooooong");
+        printf("Uniform vec3 %s not found.\n", name);
 
 }
 

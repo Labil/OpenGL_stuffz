@@ -15,6 +15,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 LightPosition_worldspace;
 
+out vec3 N;
 
 out vec3 color;
 
@@ -32,6 +33,8 @@ void main()
 	LightDirection_cameraspace = LightPosition_cameraspace + EyeDirection_cameraspace;
 
 	Normal_cameraspace = (view * model * vec4(in_Normals, 0.0)).xyz; //Only corret if ModelMatrix does not scale the model. Use its inverse transpose if not.
+
+	N = normalize(Normal_cameraspace);
 
 	color = in_Color;
 }

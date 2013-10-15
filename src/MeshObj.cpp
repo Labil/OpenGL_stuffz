@@ -74,6 +74,7 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                     float x(0), y(0);
                     sscanf(line.c_str(), "vt %f %f", &x, &y);
                     texCoords.push_back(glm::vec2(x, y));
+
                 }
                 else if(line[1] == 'n') //normal
                 {
@@ -104,12 +105,14 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 }
                 else if(numFaceData == 9)
                 {
+
                     mbIsQuadBased = false;
                     for(int i=0;i< 3;i++)
                     {
                         indiceVert.push_back(atoi(faceData[i*3].c_str())-1); //-1 pga .obj er index 1-basert, mens c++ er 0-basert
                         indiceTex.push_back(atoi(faceData[i*3+1].c_str())-1);
                         indiceNorm.push_back(atoi(faceData[i*3+2].c_str())-1);
+
                     }
                 }
                 else if(numFaceData == 8)
@@ -147,9 +150,9 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
 
                 if(curMatIndex != -1) //As long as there is a material associated with this obj
                 {
-                    mbIsQuadBased == true ? colPerFaceData = 4 : colPerFaceData = 3;
+                   // mbIsQuadBased == true ? colPerFaceData = 4 : colPerFaceData = 3;
                     glm::vec4 currentColor = mMaterials[curMatIndex]->getColors();
-                    for(int i(0); i < colPerFaceData; i++)
+                    for(int i(0); i < 3; i++)
                         colors.push_back(currentColor);
                 }
 
@@ -196,11 +199,48 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
 
         if(mNumElementsPerMat.size() > 1) //If we use one or more materials
         {
-            for(int j(0); j < mNumElementsPerMat.size()-1; j++)
+            for(int i(0); i < indiceVert.size(); i++)
+            {
+                if(indiceVert[i] < vertices.size())
+                {
+                    tv.push_back(vertices[indiceVert[i]].x);
+                    tv.push_back(vertices[indiceVert[i]].y);
+                    tv.push_back(vertices[indiceVert[i]].z);
+
+                    tc.push_back(colors[i].x);
+                    tc.push_back(colors[i].y);
+                    tc.push_back(colors[i].z);
+                    tc.push_back(colors[i].a);
+                }
+            }
+
+            for(unsigned int i(0); i < indiceNorm.size(); i++)
+            {
+                if(indiceNorm[i] < normals.size())
+                {
+                    tn.push_back(normals[indiceNorm[i]].x);
+                    tn.push_back(normals[indiceNorm[i]].y);
+                    tn.push_back(normals[indiceNorm[i]].z);
+                }
+            }
+            /*for(int i(0); i < indiceTex.size(); i ++)
+            {
+                if(indiceTex[i] < texCoords.size())
+                {
+                    tt.push_back(texCoords[indiceTex[i]].x);
+                    tt.push_back(texCoords[indiceTex[i]].y);
+                }
+            }*/
+            loadVBO(tv, tc, tt, tn, 0);
+
+            tt.clear();
+            tc.clear();
+            tn.clear();
+            tv.clear();
+          /*  for(int j(0); j < mNumElementsPerMat.size()-1; j++)
             {
                 for(int i(mNumElementsPerMat[j]); i < mNumElementsPerMat[j+1]; i++)
                 {
-
                     if(indiceVert[i] < vertices.size())
                     {
                         tv.push_back(vertices[indiceVert[i]].x);
@@ -212,7 +252,7 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                             tc.push_back(colors[i].x);
                             tc.push_back(colors[i].y);
                             tc.push_back(colors[i].z);
-                            tc.push_back(colors[i].w);
+                            tc.push_back(colors[i].a);
                         }
                         else //If the obj didn't specify a material / color
                         {
@@ -225,7 +265,7 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                     }
                     if(indiceNorm.size() > 0)
                     {
-                        if(indiceNorm[i] < normals.size())
+                       // if(indiceNorm[i] < normals.size())
                         {
                             tn.push_back(normals[indiceNorm[i]].x);
                             tn.push_back(normals[indiceNorm[i]].y);
@@ -249,7 +289,7 @@ void MeshObj::loadObject(std::string const meshName, int *firstFrame)
                 tc.clear();
                 tn.clear();
                 tv.clear();
-            }
+            }*/
         }
         else //In case of no use mat
         {
@@ -498,17 +538,22 @@ void MeshObj::display(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection)
   //  glm::mat4 modelviewProjection = projection * modelview;
   //glm::mat4 modelviewProjection = model * view * projection;
 
+        GLuint shaderID(0);
+
         for(unsigned int i(0); i < mVAOids.size(); i++)
         {
+            shaderID = mShaders[mOrderOfShaders[i]]->getProgramID();
+            glUseProgram(shaderID);
 
-            glUseProgram(mShaders[mOrderOfShaders[i]]->getProgramID());
            // glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelviewProjection"), 1, GL_FALSE, glm::value_ptr(modelviewProjection));
-            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
            // glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "modelview"), 1, GL_FALSE, glm::value_ptr(modelview));
            // glUniformMatrix3fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-            glUniformMatrix4fv(glGetUniformLocation(mShaders[mOrderOfShaders[i]]->getProgramID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+            //glUniform3fv(glGetUniformLocation(shaderID, "MaterialDiffuseColor"), 1, glm::value_ptr(mMaterials[i]->getDiffuse()));
 
+            //std::cout << "Shader mat diffuse: " << mMaterials[i]->getDiffuse().x << " and "  << mMaterials[i]->getDiffuse().y  << " and "  << mMaterials[i]->getDiffuse().z << std::endl;
                 glBindVertexArray(mVAOids[i]);
 
                     if(mOrderOfMaterials[i] != 0)
@@ -517,7 +562,7 @@ void MeshObj::display(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection)
                     if(mbIsQuadBased)
                         glDrawArrays(GL_QUADS, 0, mNumElementsPerMat[i]);
                     else
-                       glDrawArrays(GL_TRIANGLES, 0, mNumElementsPerMat[i]);
+                       glDrawArrays(GL_TRIANGLES, 0, mNumElementsPerMat[mNumElementsPerMat.size()-1]);
 
                     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -630,12 +675,9 @@ void MeshObj::sendLightInfoToShaders(glm::vec3 &v)
 {
     for(int i(0); i < mShaders.size(); i++)
     {
-       // std::cout << "Running sendLightInfoToShaders: " << v.x << " and " << v.y << " and " << v.z << std::endl;
         mShaders[i]->setUniform("LightPosition_worldspace", v);
-      //  mShaders[i]->setUniform("LightPosition", v);
-        //mShaders[i]->setUniform("Kd", 0.9f, 0.5f, 0.3f);
-        //mShaders[i]->setUniform("Ld", 1.0f, 1.0f, 1.0f);
     }
 }
+
 
 

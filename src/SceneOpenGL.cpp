@@ -51,8 +51,8 @@ bool SceneOpenGL::initGL()
 
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_BLEND);
+    //glEnable(GL_CULL_FACE);
     glClearColor(0.4,0.4,0.4,1.0);
-
     return true;
 
 }
@@ -121,7 +121,7 @@ void SceneOpenGL::mainLoop()
 
     Camera cam(vec3(3,3,3), vec3(0,0,0), vec3(0,1,0), 0.1, 0.1);
 
-    MeshObj meshTest("Objects/Ironman/ironman2.obj", "Shaders/normal.vert", "Shaders/normal.frag");
+    MeshObj meshTest("Objects/Iron/ironman.obj", "Shaders/normal.vert", "Shaders/normal.frag");
 
     //cam.addShader(meshTest.getShaders());
 
